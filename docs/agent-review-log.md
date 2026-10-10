@@ -40,8 +40,12 @@ Este documento registra decisiones, evidencias y resultados observados durante l
 
 **Limitación observada.** Una reproducción diagnóstica posterior navegó directamente al detalle y no inyectó la viñeta. Por ello, aunque el control se identificó en el trace e implementó en los specs, el cierre del anuncio **no se ejercitó en vivo durante la validación final**.
 
+**Evidencia posterior de CI.** El reporte de CI del commit [`d7d760b`](https://github.com/MilagrosRojas/automationexercise-ai-qa/actions/runs/38065877721) ejercitó correctamente el cierre de la viñeta en los casos de cantidad 1 y cantidad 2. Esta evidencia no invalida la limitación anterior: aquella describe específicamente la validación local, donde la viñeta no reapareció.
+
 ## Validación final
 
 **Resultado observado.** El caso de cantidad 1 se ejecutó con `--trace=retain-on-failure` y aprobó. Después, los cinco casos se ejecutaron en Chromium: **5 passed (8.6 s)**.
+
+**Resultado observado en CI.** El reporte asociado al commit `d7d760b` muestra los cinco casos de Chromium aprobados, todos con `retry: 0`. La ejecución de Playwright duró aproximadamente **29 s**. Es una ejecución adicional satisfactoria, no evidencia suficiente para afirmar estabilidad futura de la suite o del sitio externo.
 
 **Condición de entorno.** El primer intento dentro del sandbox no inició Chromium por `MachPortRendezvousServer ... Permission denied (1100)` antes de abrir una página. La validación se completó fuera de ese sandbox con autorización. Este resultado único no demuestra estabilidad futura ni cubre necesariamente la aparición de la viñeta o variaciones del sitio y sus anuncios.

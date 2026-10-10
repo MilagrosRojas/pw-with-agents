@@ -29,6 +29,8 @@ npx playwright test tests/products-cart --project=chromium
 
 Último resultado observado localmente: **5 passed (8.6 s)**. Es una única ejecución satisfactoria, no una garantía de estabilidad de la suite ni de disponibilidad continua del sitio externo.
 
+El reporte de CI del commit [`d7d760b`](https://github.com/MilagrosRojas/automationexercise-ai-qa/actions/runs/38065877721) aporta evidencia adicional: los cinco casos de Chromium aprobaron con `retry: 0`; la ejecución de Playwright duró aproximadamente 29 s y el cierre de la viñeta se ejercitó correctamente en los casos de cantidad 1 y cantidad 2. Esta evidencia de una ejecución tampoco garantiza estabilidad futura.
+
 ## Requisitos y notas de ejecución
 
 - Node.js compatible con el proyecto y `npm ci`.
@@ -58,4 +60,4 @@ El workflow [`.github/workflows/playwright.yml`](.github/workflows/playwright.ym
 npx playwright test tests/products-cart --project=chromium
 ```
 
-Se activa en `push` y `pull_request` hacia `main` o `master`, y también permite ejecución manual con `workflow_dispatch`. El informe HTML (`playwright-report/`) y los resultados (`test-results/`) se conservan como artifacts incluso cuando falla la ejecución. Firefox y WebKit siguen configurados en `playwright.config.ts`, pero están pendientes de validación en CI para este alcance actual. Este cambio no se ha publicado ni enviado mediante push.
+Se activa en `push` y `pull_request` hacia `main` o `master`, y también permite ejecución manual con `workflow_dispatch`. El informe HTML (`playwright-report/`) y los resultados (`test-results/`) se conservan como artifacts incluso cuando falla la ejecución. Firefox y WebKit siguen configurados en `playwright.config.ts`, pero están pendientes de validación en CI para este alcance actual.
