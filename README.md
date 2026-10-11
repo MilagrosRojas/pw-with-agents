@@ -25,15 +25,48 @@ The five scenarios live in `tests/products-cart/` and are planned in `specs/prod
 
 Every scenario uses Playwright's `page` fixture and verifies that the cart starts empty without deleting products as automatic recovery.
 
-## Local execution
+## Fresh-machine setup and local execution
+
+The following commands set up a new machine with [nvm](https://github.com/nvm-sh/nvm) and Git installed:
 
 ```bash
+git clone https://github.com/MilagrosRojas/pw-with-agents.git
+cd pw-with-agents
+nvm install
+nvm use
 npm ci
+```
+
+`nvm install` reads `.nvmrc` and installs Node 24.18.0 if needed; `nvm use` activates that exact version for the shell. Confirm it before continuing:
+
+```bash
+node --version
+npm --version
+```
+
+Install Chromium for Playwright. On Linux, include OS browser dependencies; on macOS and Windows, install the browser itself:
+
+```bash
+# Linux
 npx playwright install --with-deps chromium
+
+# macOS or Windows
+npx playwright install chromium
+```
+
+Run the five cart scenarios in Chromium:
+
+```bash
 npx playwright test tests/products-cart --project=chromium
 ```
 
 The focused command above runs only the five product-cart scenarios. A bare `npx playwright test --project=chromium` discovers eight tests: the five product-cart specs plus `tests/seed.spec.ts` and `tests/example.spec.ts` (two tests). `seed.spec.ts` is the documented seed/reference for the product-cart plan and agents; it is not imported by those specs. `example.spec.ts` is the Playwright starter example. Neither file is part of the focused CI command, but both remain available for local full-suite discovery.
+
+Open the generated Playwright HTML report after a run:
+
+```bash
+npx playwright show-report
+```
 
 ## Allure reports
 
@@ -55,6 +88,21 @@ npx playwright show-trace trace.zip
 
 Allure is not represented as an embedded Trace Viewer: the downloaded ZIP opens in Trace Viewer.
 
+### Viewing downloaded CI artifacts
+
+GitHub Actions publishes `allure-report` when the report-generation step succeeds. Download its ZIP from the workflow run, then extract and serve it over HTTP (do not open `index.html` directly from the filesystem):
+
+```bash
+unzip allure-report.zip -d allure-report-artifact
+python3 -m http.server 8080 --directory allure-report-artifact
+```
+
+Open `http://localhost:8080` in a browser. If the downloaded archive contains a top-level `allure-report/` directory, serve that directory instead:
+
+```bash
+python3 -m http.server 8080 --directory allure-report-artifact/allure-report
+```
+
 The latest local result during Allure integration was **5 passed (8.1 s)** with `retry: 0`. Vignette dismissal was exercised in the quantity 1, quantity 2, and deletion scenarios. This is one successful execution, not a guarantee of suite stability or continuous availability of the external site.
 
 Historical evidence is retained separately: an earlier local diagnosis recorded **4 passed, 1 failed** because the quantity 2 scenario found both a Google vignette and an anchor ad with visible `Advertisement` iframes; the test failed explicitly on uniqueness rather than selecting an arbitrary iframe. An earlier successful run recorded **5 passed (8.6 s)**.
@@ -70,6 +118,8 @@ The CI report for commit [`d7d760b`](https://github.com/MilagrosRojas/pw-with-ag
 - Detail navigation can receive a Google vignette. The specs detect `#google_vignette` and require exactly one visible `Advertisement` iframe inside `ins[data-vignette-loaded="true"]` before locating its accessible `Close ad` button; they do not block ads globally. The earlier diagnosis also observed a visible anchor ad, excluded by that specific container. Successful runs did not retain traces because configuration retains them only on failure, so they do not establish that the anchor ad coexisted in those executions.
 
 ## Playwright agents and portability
+
+The planner, generator, and healer agents are optional local development tools. They are **not** required to install dependencies, run the five tests, generate either report, or use CI; GitHub Actions executes Playwright only.
 
 The `.codex/agents/playwright_test_*.toml` files intentionally retain local absolute paths to Node 24.18.0 and `node_modules/playwright/cli.js`. After cloning, install dependencies, activate the `.nvmrc` version, and adapt both values in each TOML to the local machine.
 
