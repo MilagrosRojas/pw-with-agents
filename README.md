@@ -2,7 +2,7 @@
 
 An end-to-end automation project for the product and cart flows of [Automation Exercise](https://automationexercise.com/). The current scope covers searching for **Blue Top**, adding it from the listing and detail page, and deleting it from the cart.
 
-The GitHub repository is `MilagrosRojas/pw-with-agents`. The npm package is intentionally still named `automationexercise-ai-qa`; package and repository names do not need to match.
+The GitHub repository and npm package are both named `pw-with-agents`.
 
 ## Tooling
 
