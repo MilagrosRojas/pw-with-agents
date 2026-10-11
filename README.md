@@ -7,7 +7,8 @@ Proyecto de automatización end-to-end para los flujos de productos y carrito de
 - Node.js y npm.
 - Playwright Test con TypeScript.
 - Chromium, Firefox y WebKit configurados en `playwright.config.ts`.
-- GitHub Actions para ejecutar la suite y publicar el informe HTML como artefacto.
+- Allure Report y el informe HTML de Playwright para conservar resultados y diagnósticos de fallos.
+- GitHub Actions para ejecutar la suite y publicar ambos informes como artefactos.
 
 ## Casos implementados
 
@@ -26,6 +27,27 @@ Cada caso usa el fixture `page` de Playwright y valida que el carrito empieza va
 ```bash
 npx playwright test tests/products-cart --project=chromium
 ```
+
+## Reportes Allure
+
+Instala las dependencias del proyecto y genera el reporte después de ejecutar las pruebas:
+
+```bash
+npm ci
+npx playwright test tests/products-cart --project=chromium
+npm run allure:generate
+npm run allure:open
+```
+
+Allure Report 3 se ejecuta con Node.js: no añade un requisito de Java. Los resultados crudos se escriben en `allure-results/` y el informe generado en `allure-report/`; ambos directorios son generados e ignorados por Git. El reporte HTML de Playwright continúa en `playwright-report/`.
+
+La configuración conserva screenshots y traces solo cuando una prueba falla. `allure-playwright` reconoce automáticamente los adjuntos que Playwright produce al finalizar la prueba, incluido el `trace.zip`, por lo que no se usa un `afterEach` que pudiera leerlo antes de cerrar el contexto ni código adicional que duplicase adjuntos. Para inspeccionar un trace, descárgalo desde el resultado de Allure y ábrelo con Playwright Trace Viewer:
+
+```bash
+npx playwright show-trace trace.zip
+```
+
+No se promete un visor de traces integrado en la interfaz de Allure: el ZIP descargado se abre con Trace Viewer.
 
 Último resultado observado localmente: **5 passed (8.6 s)**. Es una única ejecución satisfactoria, no una garantía de estabilidad de la suite ni de disponibilidad continua del sitio externo.
 
@@ -60,4 +82,4 @@ El workflow [`.github/workflows/playwright.yml`](.github/workflows/playwright.ym
 npx playwright test tests/products-cart --project=chromium
 ```
 
-Se activa en `push` y `pull_request` hacia `main` o `master`, y también permite ejecución manual con `workflow_dispatch`. El informe HTML (`playwright-report/`) y los resultados (`test-results/`) se conservan como artifacts incluso cuando falla la ejecución. Firefox y WebKit siguen configurados en `playwright.config.ts`, pero están pendientes de validación en CI para este alcance actual.
+Se activa en `push` y `pull_request` hacia `main` o `master`, y también permite ejecución manual con `workflow_dispatch`. La ejecución conserva su estado fallido aunque la generación de Allure Report 3 se ejecuta con `always()`. El informe HTML (`playwright-report/`), los resultados de Playwright (`test-results/`), `allure-results/` y `allure-report/` se conservan como artifacts incluso cuando fallan las pruebas. Firefox y WebKit siguen configurados en `playwright.config.ts`, pero están pendientes de validación en CI para este alcance actual.
