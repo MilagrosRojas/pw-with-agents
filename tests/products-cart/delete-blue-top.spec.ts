@@ -1,10 +1,37 @@
 import { test, expect } from '@playwright/test';
+import * as allure from 'allure-js-commons';
 
 // spec: specs/products-cart.md
 // seed: tests/seed.spec.ts
 
 test.describe('Blue Top cart flows', () => {
   test('deletes prepared Blue Top and shows the empty cart', async ({ page }) => {
+    await allure.description(`
+## Objective
+Verify that deleting the single prepared **Blue Top** row returns the cart to its empty state.
+
+## Preconditions and case independence
+- The case uses Playwright's isolated \`page\` fixture; it does not load or share \`storageState\`.
+- Before preparing Blue Top, it verifies the empty-cart message and zero rows; it does not delete products to restore that condition.
+- The product that is deleted is added within the same case, so there is no dependency on other cases.
+
+## Test data
+- Product: \`Blue Top\`.
+- Expected detail link: \`/product_details/1\`.
+- Prepared quantity: \`1\`.
+- Expected values before deletion: \`Rs. 500\`, quantity \`1\`, and total \`Rs. 500\`.
+
+## Steps
+1. Open the cart and confirm that it is empty and has no rows.
+2. Open Products, verify **All Products**, locate the single Blue Top card, and verify its single **View Product** link to \`/product_details/1\`.
+3. Activate **View Product**. Only if the observed advertising vignette appears, validate the **Close ad** button, close it, and activate **View Product** again only if the URL is still not the detail URL.
+4. Verify the detail URL, enter Quantity \`1\`, confirm it, add to the cart, and open **View Cart** from the confirmation modal.
+5. Verify the values of the single prepared Blue Top row and activate its \`×\` deletion control.
+
+## Expected results
+- Before deletion, there is exactly one Blue Top row with \`Rs. 500\` price, \`1\` quantity, and \`Rs. 500\` total.
+- After deleting it, no rows remain and \`Cart is empty! Click here to buy products.\` is displayed.
+`);
     // 1. Create a fresh browser context for this case without loading or sharing storageState; navigate to Cart.
     await page.goto('/view_cart');
 
@@ -23,11 +50,14 @@ test.describe('Blue Top cart flows', () => {
     await expect(viewProduct).toHaveCount(1);
     await expect(viewProduct).toHaveAttribute('href', '/product_details/1');
     await viewProduct.click();
-    // The retained trace showed this full-page Google vignette in #aswift_3,
-    // with an accessible “Close ad” button in its cross-origin frame.
-    const vignetteFrame = page.locator('iframe#aswift_3[title="Advertisement"]');
-    if (await vignetteFrame.isVisible()) {
-      const closeVignette = page.frameLocator('iframe#aswift_3').getByRole('button', { name: 'Close ad' });
+    // The retained trace showed this full-page Google vignette after the URL
+    // changes to #google_vignette, with a visible advertisement frame and an
+    // accessible “Close ad” button in its cross-origin frame.
+    const vignetteFrameSelector = 'ins[data-vignette-loaded="true"] iframe[title="Advertisement"]:visible';
+    const vignetteFrame = page.locator(vignetteFrameSelector);
+    if (page.url().includes('#google_vignette')) {
+      await expect(vignetteFrame).toHaveCount(1);
+      const closeVignette = page.frameLocator(vignetteFrameSelector).getByRole('button', { name: 'Close ad' });
       await expect(closeVignette).toBeVisible();
       await closeVignette.click();
       await expect(vignetteFrame).toBeHidden();

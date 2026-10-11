@@ -1,59 +1,59 @@
-# Experimento de selector para healer
+# Healer selector experiment
 
-**Rama:** `experiment/healer-selector`
-**Punto de partida:** commit `6650e37267a8b352103a3b41bbc30f5646311ee5` (`docs: record verified CI results and ad dismissal`)
+**Branch:** `experiment/healer-selector`
+**Starting point:** commit `6650e37267a8b352103a3b41bbc30f5646311ee5` (`docs: record verified CI results and ad dismissal`)
 
-## Objetivo
+## Objective
 
-Crear de forma controlada un fallo de locator en el caso de búsqueda Blue Top, conservando sus assertions y resultados esperados, para diagnosticarlo posteriormente con el healer.
+Create a controlled locator failure in the Blue Top search case, preserving its assertions and expected results, and then diagnose it with the healer.
 
-## Línea base
+## Baseline
 
-Antes de modificar el spec se ejecutó exclusivamente:
+Before changing the spec, only this scenario ran:
 
 ```bash
 npx playwright test tests/products-cart/search-blue-top.spec.ts --project=chromium
 ```
 
-**Resultado observado:** 1 passed (5.2 s).
+**Observed result:** 1 passed (5.2 s).
 
-## Cambio experimental exacto
+## Exact experimental change
 
-Archivo: `tests/products-cart/search-blue-top.spec.ts`
+File: `tests/products-cart/search-blue-top.spec.ts`
 
 ```diff
 - await page.locator('#submit_search').click();
 + await page.locator('#submit_search_nonexistent').click();
 ```
 
-No se modificaron assertions, resultados esperados, datos, flujo ni otros tests.
+No assertions, expected results, data, flow, or other tests were changed.
 
-## Ejecución controlada
+## Controlled execution
 
-Se ejecutó exclusivamente el mismo caso con:
+Only the same scenario ran with:
 
 ```bash
 npx playwright test tests/products-cart/search-blue-top.spec.ts --project=chromium --retries=0 --trace=retain-on-failure
 ```
 
-**Resultado observado:** fallo esperado. Tras navegar a `/products` y rellenar el campo Search Product con `Blue Top`, Playwright agotó el timeout de prueba de 30 s en:
+**Observed result:** expected failure. After navigating to `/products` and filling Search Product with `Blue Top`, Playwright exhausted the 30-second test timeout at:
 
 ```text
 locator.click: Test timeout of 30000ms exceeded.
 waiting for locator('#submit_search_nonexistent')
 ```
 
-La evidencia señala el locator alterado como causa: el fallo ocurrió exactamente en esa línea, antes de la assertion de URL de búsqueda y sin evidencia de una viñeta, bloqueo de navegación u otro problema de aplicación. Se retuvo el trace en:
+The evidence identifies the altered locator as the cause: failure occurred on that exact line, before the search URL assertion and without evidence of a vignette, navigation block, or application issue. The retained trace was located at:
 
 ```text
 test-results/products-cart-search-blue--a2b8d-s-observed-matching-results-chromium/trace.zip
 ```
 
-## Diagnóstico de `playwright_test_healer`
+## `playwright_test_healer` diagnosis
 
-**Acción del agente.** El healer operó en modo de diagnóstico sin editar archivos. Revisó el error, el trace y el botón en Chromium.
+**Agent action.** The healer ran in diagnosis-only mode without editing files. It reviewed the error, trace, and browser button.
 
-**Evidencia DOM observada:**
+**Observed DOM evidence:**
 
 ```html
 <button type="button" id="submit_search" class="btn btn-default btn-lg">
@@ -61,41 +61,41 @@ test-results/products-cart-search-blue--a2b8d-s-observed-matching-results-chromi
 </button>
 ```
 
-El locator propuesto fue `page.locator('#submit_search')`. En el navegador resolvió exactamente un elemento (`count: 1`), visible y habilitado, correspondiente a un único `<button type="button">`.
+The proposed locator was `page.locator('#submit_search')`. In the browser it resolved exactly one visible and enabled element: one `<button type="button">`.
 
-**Causa diagnosticada:** `#submit_search_nonexistent` no existe; el timeout no se atribuyó a anuncio, navegación, assertion ni defecto de aplicación.
+**Diagnosed cause:** `#submit_search_nonexistent` does not exist; the timeout was not attributed to an ad, navigation, assertion, or application defect.
 
-## Aprobación humana y reparación
+## Human approval and repair
 
-**Aprobación humana.** Se aprobó el diff mínimo propuesto por el healer.
+**Human approval.** The healer's minimal proposed diff was approved.
 
-**Acción del agente.** `playwright_test_healer` aplicó exclusivamente la reparación aprobada:
+**Agent action.** `playwright_test_healer` applied only the approved repair:
 
 ```diff
 - await page.locator('#submit_search_nonexistent').click();
 + await page.locator('#submit_search').click();
 ```
 
-No modificó documentación, otros tests, assertions, resultados esperados, retries ni timeouts. La comprobación posterior del healer confirmó que el spec volvió a coincidir con su contenido base y que `git diff --check` pasó.
+It did not modify documentation, other tests, assertions, expected results, retries, or timeouts. The healer's follow-up check confirmed the spec matched its baseline content and `git diff --check` passed.
 
-## Validación posterior
+## Follow-up validation
 
-**Ejecuciones del agente principal.** No fueron ejecutadas por el healer.
+**Main-agent executions.** The healer did not perform these executions.
 
-1. Caso de búsqueda reparado:
+1. Repaired search scenario:
 
    ```bash
    npx playwright test tests/products-cart/search-blue-top.spec.ts --project=chromium --retries=0
    ```
 
-   **Resultado observado:** 1 passed (5.1 s).
+   **Observed result:** 1 passed (5.1 s).
 
-2. Cinco casos de productos y carrito:
+2. Five product and cart scenarios:
 
    ```bash
    npx playwright test tests/products-cart --project=chromium --retries=0
    ```
 
-   **Resultado observado:** 5 passed (7.5 s).
+   **Observed result:** 5 passed (7.5 s).
 
-Las assertions y los resultados esperados se conservaron durante todo el experimento; sólo se alteró y restauró el locator del botón de búsqueda.
+Assertions and expected results were retained throughout the experiment; only the search-button locator was altered and restored.

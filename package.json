@@ -1,15 +1,21 @@
 {
-  "name": "automationexercise-ai-qa",
+  "name": "pw-with-agents",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "allure:generate": "allure generate allure-results --output allure-report",
+    "allure:open": "allure open allure-report"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
     "@playwright/test": "^1.64.0",
-    "@types/node": "^26.6.5"
+    "@types/node": "^26.6.5",
+    "allure": "^3.20.1",
+    "allure-js-commons": "^3.13.0",
+    "allure-playwright": "^3.13.0"
   }
 }

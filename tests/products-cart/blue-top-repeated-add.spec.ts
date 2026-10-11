@@ -1,10 +1,37 @@
 import { test, expect } from '@playwright/test';
+import * as allure from 'allure-js-commons';
 
 // spec: specs/products-cart.md
 // seed: tests/seed.spec.ts
 
 test.describe('Blue Top cart flows', () => {
   test('increments Blue Top quantity when it is added twice', async ({ page }) => {
+    await allure.description(`
+## Objective
+Verify that adding the same **Blue Top** twice from Products accumulates the quantity in a single cart row.
+
+## Preconditions and case independence
+- The case uses Playwright's isolated \`page\` fixture; it does not load or share \`storageState\`.
+- It first verifies the empty-cart message and zero rows, without deleting products to restore the precondition.
+- Both additions are prepared within this case, without depending on a previous execution.
+
+## Test data
+- Product: \`Blue Top\`.
+- Expected unit price: \`Rs. 500\`.
+- Number of additions: \`2\`.
+- Expected quantity and total: \`2\` and \`Rs. 1000\`.
+
+## Steps
+1. Open the cart and verify that it has no rows and displays the empty-cart message.
+2. Open Products, verify the URL and **All Products**, and locate the single logical Blue Top card.
+3. Use **Add to cart** on that card and verify the **Added!** modal, its message, **Continue Shopping**, and **View Cart**.
+4. Choose **Continue Shopping**, use the same **Add to cart** control a second time, and verify the second **Added!** modal and **View Cart**.
+5. Open the cart from the second confirmation and validate the single Blue Top row.
+
+## Expected results
+- Each addition shows the observed confirmation.
+- The cart contains exactly one Blue Top row, not two: Blue Top name, \`Rs. 500\` unit price, \`2\` quantity, and \`Rs. 1000\` total.
+`);
     // 1. Create a fresh browser context for this case without loading or sharing storageState; navigate to Cart.
     await page.goto('/view_cart');
 
