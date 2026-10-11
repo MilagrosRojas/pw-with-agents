@@ -49,7 +49,9 @@ npx playwright show-trace trace.zip
 
 No se promete un visor de traces integrado en la interfaz de Allure: el ZIP descargado se abre con Trace Viewer.
 
-Último resultado observado localmente: **5 passed (8.6 s)**. Es una única ejecución satisfactoria, no una garantía de estabilidad de la suite ni de disponibilidad continua del sitio externo.
+Resultado local más reciente durante la integración de Allure: **5 passed (8.1 s)** con `retry: 0`. El cierre de la viñeta se ejercitó en los casos de cantidad 1, cantidad 2 y eliminación. Es una ejecución satisfactoria, no una garantía de estabilidad de la suite ni de disponibilidad continua del sitio externo.
+
+Se conserva como evidencia histórica el diagnóstico local anterior de **4 passed, 1 failed**: el caso de cantidad 2 encontró una viñeta de Google y un anuncio ancla, ambos con iframes visibles de título `Advertisement`; la prueba falló de forma explícita al comprobar la unicidad y no escogió un iframe arbitrariamente. También se conserva la ejecución previa de **5 passed (8.6 s)**.
 
 El reporte de CI del commit [`d7d760b`](https://github.com/MilagrosRojas/automationexercise-ai-qa/actions/runs/38065877721) aporta evidencia adicional: los cinco casos de Chromium aprobaron con `retry: 0`; la ejecución de Playwright duró aproximadamente 29 s y el cierre de la viñeta se ejercitó correctamente en los casos de cantidad 1 y cantidad 2. Esta evidencia de una ejecución tampoco garantiza estabilidad futura.
 
@@ -59,7 +61,7 @@ El reporte de CI del commit [`d7d760b`](https://github.com/MilagrosRojas/automat
 - Navegadores de Playwright instalados, por ejemplo: `npx playwright install --with-deps`.
 - Acceso de red a `https://automationexercise.com/`; los resultados también dependen de contenido de terceros servido por el sitio.
 - En este entorno macOS, Chromium no pudo iniciarse dentro del sandbox: `bootstrap_check_in ... MachPortRendezvousServer ... Permission denied (1100)`. La ejecución del navegador necesitó autorización fuera de ese sandbox.
-- El flujo de detalle puede recibir una viñeta de Google. El manejo de los specs se limita al iframe observado `#aswift_3` y a su botón accesible `Close ad`; no bloquea anuncios globalmente.
+- El flujo de detalle puede recibir una viñeta de Google. Los specs detectan el estado `#google_vignette` y requieren exactamente un iframe visible con título `Advertisement` dentro de `ins[data-vignette-loaded="true"]` antes de buscar su botón accesible `Close ad`; no bloquean anuncios globalmente. El diagnóstico anterior también observó un anuncio ancla visible, excluido por ese contenedor específico. Las ejecuciones aprobadas no conservaron trace porque la configuración retiene traces solo ante fallos, por lo que no se afirma que el anuncio ancla coexistiera en esas ejecuciones.
 
 ## Agentes de Playwright y portabilidad
 

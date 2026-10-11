@@ -51,11 +51,14 @@ Verify that selecting quantity \`2\` in the **Blue Top** detail page produces on
     await expect(viewProduct).toHaveCount(1);
     await expect(viewProduct).toHaveAttribute('href', '/product_details/1');
     await viewProduct.click();
-    // The retained trace showed this full-page Google vignette in #aswift_3,
-    // with an accessible “Close ad” button in its cross-origin frame.
-    const vignetteFrame = page.locator('iframe#aswift_3[title="Advertisement"]');
-    if (await vignetteFrame.isVisible()) {
-      const closeVignette = page.frameLocator('iframe#aswift_3').getByRole('button', { name: 'Close ad' });
+    // The retained trace showed this full-page Google vignette after the URL
+    // changes to #google_vignette, with a visible advertisement frame and an
+    // accessible “Close ad” button in its cross-origin frame.
+    const vignetteFrameSelector = 'ins[data-vignette-loaded="true"] iframe[title="Advertisement"]:visible';
+    const vignetteFrame = page.locator(vignetteFrameSelector);
+    if (page.url().includes('#google_vignette')) {
+      await expect(vignetteFrame).toHaveCount(1);
+      const closeVignette = page.frameLocator(vignetteFrameSelector).getByRole('button', { name: 'Close ad' });
       await expect(closeVignette).toBeVisible();
       await closeVignette.click();
       await expect(vignetteFrame).toBeHidden();
