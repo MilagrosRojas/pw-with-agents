@@ -1,51 +1,51 @@
-# Registro de revisión de agentes
+# Agent review log
 
-Este documento registra decisiones, evidencias y resultados observados durante la preparación de la cobertura de productos y carrito. No infiere estabilidad de la suite a partir de una sola ejecución.
+This document records decisions, evidence, and observed results gathered while preparing product and cart coverage. It does not infer suite stability from a single execution.
 
-## Planner — exploración y plan revisado
+## Planner — exploration and revised plan
 
-**Acción del agente.** `playwright_test_planner` exploró el sitio y produjo el plan `specs/products-cart.md` para Blue Top y el carrito.
+**Agent action.** `playwright_test_planner` explored the site and produced `specs/products-cart.md` for Blue Top and the cart.
 
-**Revisión humana.** Se pidieron ajustes al plan para separar explícitamente la cantidad `2` elegida desde el detalle de dos adiciones del mismo producto. También se exigió independencia entre casos, carrito inicialmente vacío sin limpieza automática, datos preparados dentro de cada caso y diferenciación entre observaciones y supuestos.
+**Human review.** The plan was revised to distinguish quantity `2` selected from details from adding the same product twice. It also required independent cases, an initially empty cart without automatic cleanup, data prepared inside each case, and a distinction between observations and assumptions.
 
-**Resultado observado.** El plan final contiene cinco casos: búsqueda, cantidad 1 desde detalle, cantidad 2 desde detalle, adición repetida y eliminación. Registró como observados el precio `Rs. 500`, la cantidad inicial `1`, el modal `Added!` y el mensaje de carrito vacío; las consolidaciones y totales quedaron como comportamientos bajo prueba.
+**Observed result.** The final plan has five cases: search, quantity 1 from details, quantity 2 from details, repeated add, and deletion. It recorded `Rs. 500`, initial quantity `1`, the `Added!` modal, and the empty-cart message as observations; consolidation and totals remained behaviors under test.
 
-## Generator — primera implementación
+## Generator — first implementation
 
-**Acción del agente.** `playwright_test_generator` creó los cinco specs en `tests/products-cart/` a partir del plan.
+**Agent action.** `playwright_test_generator` created the five specs in `tests/products-cart/` from the plan.
 
-**Resultado observado.** La primera ejecución informó **2 aprobados y 3 fallidos**. Los fallos correspondían a flujos que usaban el enlace View Product; no se atribuyeron automáticamente a anuncios.
+**Observed result.** The first execution reported **2 passed and 3 failed**. The failures involved flows using the View Product link; they were not automatically attributed to ads.
 
-## Healer — reparación rechazada
+## Healer — rejected repair
 
-**Acción del agente.** `playwright_test_healer` revisó los fallos y propuso una reparación de selectores.
+**Agent action.** `playwright_test_healer` reviewed the failures and proposed a selector repair.
 
-**Resultado observado.** Tras esa reparación, el resultado fue **1 aprobado y 4 fallidos**.
+**Observed result.** After that repair, the result was **1 passed and 4 failed**.
 
-**Revisión humana.** La reparación fue rechazada porque asumía de forma incorrecta que View Product era descendiente de `.single-products`. Se solicitó inspección DOM real y una corrección mínima, sin modificar el caso de adición repetida.
+**Human review.** The repair was rejected because it incorrectly assumed that View Product descended from `.single-products`. Real DOM inspection and a minimal correction were requested, without changing the repeated-add case.
 
-## Revisión supervisada — scope de View Product
+## Supervised review — View Product scope
 
-**Acción de revisión supervisada.** En una sesión diagnóstica se abrió `/products` directamente sólo para inspeccionar el DOM; los tests conservaron el flujo Products → View Product.
+**Supervised-review action.** A diagnostic session opened `/products` directly only to inspect the DOM; tests retained the Products → View Product flow.
 
-**Evidencia observada.** Para Blue Top, `.productinfo` está dentro de `.single-products`, mientras que `.choose` es un hermano de `.single-products` dentro de `.product-image-wrapper`. El contenedor lógico identificado fue `.product-image-wrapper`; dentro de él, `.choose a[href="/product_details/1"]` resolvió exactamente un enlace visible con `href` `/product_details/1`.
+**Observed evidence.** For Blue Top, `.productinfo` is inside `.single-products`, while `.choose` is a sibling of `.single-products` inside `.product-image-wrapper`. The identified logical container was `.product-image-wrapper`; within it, `.choose a[href="/product_details/1"]` resolved exactly one visible link with that href.
 
-**Cambio aplicado bajo revisión.** Se corrigió únicamente el alcance de View Product en los cuatro specs afectados. Se conservaron assertions y el refinamiento de búsqueda que lee sólo la representación no-overlay. El spec de adición repetida no se modificó.
+**Change applied under review.** Only View Product scope was corrected in the four affected specs. Assertions and the search refinement that reads only the non-overlay representation were retained. The repeated-add spec was not changed.
 
-## Viñeta — control identificado en trace y manejo implementado
+## Vignette — control identified in trace and handling implemented
 
-**Evidencia observada.** Un trace retenido de cantidad 1 mostró que, después de View Product, la URL quedó en `/products#google_vignette`. El documento principal tenía un iframe `#aswift_3` con título `Advertisement`; dentro de su frame de origen cruzado se observó un elemento con `role="button"`, nombre accesible `Close ad` e id `dismiss-button`.
+**Observed evidence.** A retained quantity-1 trace showed that, after View Product, the URL remained `/products#google_vignette`. The main document contained an `#aswift_3` iframe titled `Advertisement`; inside its cross-origin frame there was an element with `role="button"`, accessible name `Close ad`, and id `dismiss-button`.
 
-**Acción implementada.** En los tres specs que abren el detalle (cantidad 1, cantidad 2 y eliminación), se añadió un manejo condicional y limitado a ese iframe: comprobar que existe y está visible, exigir que `Close ad` esté visible, cerrarlo con un clic normal, esperar que el iframe se oculte y volver a pulsar View Product sólo si la URL aún no es la del detalle. No se bloquearon anuncios, no se usó `force`, espera fija, navegación directa ni captura de errores de navegación o assertions.
+**Implemented action.** The three specs that open details (quantity 1, quantity 2, and deletion) received conditional handling limited to that iframe: verify it exists and is visible, require `Close ad` to be visible, close it with a normal click, wait for the iframe to become hidden, and click View Product again only if the URL is not yet the detail URL. The implementation did not block ads, use `force`, fixed waits, direct navigation, or captured navigation/assertion errors.
 
-**Limitación observada.** Una reproducción diagnóstica posterior navegó directamente al detalle y no inyectó la viñeta. Por ello, aunque el control se identificó en el trace e implementó en los specs, el cierre del anuncio **no se ejercitó en vivo durante la validación final**.
+**Historical limitation.** A later diagnostic reproduction navigated directly to details and did not inject the vignette. Therefore, although the control was identified in the trace and implemented, closing the ad **was not exercised live during that local validation**.
 
-**Evidencia posterior de CI.** El reporte de CI del commit [`d7d760b`](https://github.com/MilagrosRojas/automationexercise-ai-qa/actions/runs/38065877721) ejercitó correctamente el cierre de la viñeta en los casos de cantidad 1 y cantidad 2. Esta evidencia no invalida la limitación anterior: aquella describe específicamente la validación local, donde la viñeta no reapareció.
+**Later CI evidence.** The CI report for commit [`d7d760b`](https://github.com/MilagrosRojas/pw-with-agents/actions/runs/38065877721) exercised vignette dismissal in the quantity 1 and quantity 2 cases. This does not invalidate the earlier limitation, which describes that specific local validation where the vignette did not recur.
 
-## Validación final
+## Final validation
 
-**Resultado observado.** El caso de cantidad 1 se ejecutó con `--trace=retain-on-failure` y aprobó. Después, los cinco casos se ejecutaron en Chromium: **5 passed (8.6 s)**.
+**Observed result.** The quantity-1 scenario ran with `--trace=retain-on-failure` and passed. The five Chromium scenarios then ran: **5 passed (8.6 s)**.
 
-**Resultado observado en CI.** El reporte asociado al commit `d7d760b` muestra los cinco casos de Chromium aprobados, todos con `retry: 0`. La ejecución de Playwright duró aproximadamente **29 s**. Es una ejecución adicional satisfactoria, no evidencia suficiente para afirmar estabilidad futura de la suite o del sitio externo.
+**Observed CI result.** The report associated with commit `d7d760b` shows all five Chromium cases passing with `retry: 0`. Playwright ran for approximately **29 seconds**. This is an additional successful execution, not sufficient evidence to claim future stability of the suite or the external site.
 
-**Condición de entorno.** El primer intento dentro del sandbox no inició Chromium por `MachPortRendezvousServer ... Permission denied (1100)` antes de abrir una página. La validación se completó fuera de ese sandbox con autorización. Este resultado único no demuestra estabilidad futura ni cubre necesariamente la aparición de la viñeta o variaciones del sitio y sus anuncios.
+**Environment condition.** The first attempt inside the sandbox did not start Chromium because of `MachPortRendezvousServer ... Permission denied (1100)` before opening a page. Validation completed outside that sandbox with authorization. This one result does not establish future stability or necessarily cover vignette appearance and third-party ad variations.

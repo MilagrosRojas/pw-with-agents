@@ -1,87 +1,93 @@
-# Automation Exercise AI QA
+# PW with Agents
 
-Proyecto de automatización end-to-end para los flujos de productos y carrito de [Automation Exercise](https://automationexercise.com/). El alcance actual cubre la búsqueda de **Blue Top**, su adición al carrito desde listado y detalle, y su eliminación.
+An end-to-end automation project for the product and cart flows of [Automation Exercise](https://automationexercise.com/). The current scope covers searching for **Blue Top**, adding it from the listing and detail page, and deleting it from the cart.
 
-## Herramientas
+The GitHub repository is `MilagrosRojas/pw-with-agents`. The npm package is intentionally still named `automationexercise-ai-qa`; package and repository names do not need to match.
 
-- Node.js y npm.
-- Playwright Test con TypeScript.
-- Chromium, Firefox y WebKit configurados en `playwright.config.ts`.
-- Allure Report y el informe HTML de Playwright para conservar resultados y diagnósticos de fallos.
-- GitHub Actions para ejecutar la suite y publicar ambos informes como artefactos.
+## Tooling
 
-## Casos implementados
+- Node.js 24.18.0 (see `.nvmrc`) and npm.
+- Playwright Test with TypeScript.
+- Chromium, Firefox, and WebKit configured in `playwright.config.ts`.
+- Allure Report 3 and the Playwright HTML report for results and failure diagnostics.
+- GitHub Actions for the scoped Chromium suite and report artifacts.
+- Local Codex planner, generator, and healer agents; GitHub Actions does not run those agents.
 
-Los cinco casos están en `tests/products-cart/` y se planificaron en `specs/products-cart.md`:
+## Implemented scenarios
 
-1. Buscar `Blue Top` y validar que hay al menos un resultado lógico y que todos sus nombres contienen el término, sin duplicar la variante overlay de cada tarjeta.
-2. Agregar Blue Top desde el detalle con cantidad explícita `1`; validar una fila con nombre, precio unitario `Rs. 500`, cantidad `1` y total `Rs. 500`.
-3. Agregar Blue Top desde el detalle con cantidad `2`; validar una fila con nombre, precio unitario `Rs. 500`, cantidad `2` y total `Rs. 1000`.
-4. Agregar Blue Top dos veces desde el listado; validar una única fila acumulada con cantidad `2` y total `Rs. 1000`.
-5. Preparar Blue Top en el mismo caso, comprobar sus valores de fila y eliminarlo; validar que no quedan filas y aparece el carrito vacío.
+The five scenarios live in `tests/products-cart/` and are planned in `specs/products-cart.md`:
 
-Cada caso usa el fixture `page` de Playwright y valida que el carrito empieza vacío sin limpiar productos como recuperación automática.
+1. Search for `Blue Top`; verify at least one logical result and that every logical product name contains the term, without counting a card overlay twice.
+2. Add Blue Top from details with explicit quantity `1`; verify one row with name, `Rs. 500` unit price, quantity `1`, and `Rs. 500` total.
+3. Add Blue Top from details with quantity `2`; verify one row with name, `Rs. 500` unit price, quantity `2`, and `Rs. 1000` total.
+4. Add Blue Top twice from the listing; verify one accumulated row with quantity `2` and `Rs. 1000` total.
+5. Prepare Blue Top in the same case, verify its row values, delete it, and verify that no rows remain and the cart is empty.
 
-## Ejecución en Chromium
+Every scenario uses Playwright's `page` fixture and verifies that the cart starts empty without deleting products as automatic recovery.
 
-```bash
-npx playwright test tests/products-cart --project=chromium
-```
-
-## Reportes Allure
-
-Instala las dependencias del proyecto y genera el reporte después de ejecutar las pruebas:
+## Local execution
 
 ```bash
 npm ci
+npx playwright install --with-deps chromium
+npx playwright test tests/products-cart --project=chromium
+```
+
+The focused command above runs only the five product-cart scenarios. A bare `npx playwright test --project=chromium` discovers eight tests: the five product-cart specs plus `tests/seed.spec.ts` and `tests/example.spec.ts` (two tests). `seed.spec.ts` is the documented seed/reference for the product-cart plan and agents; it is not imported by those specs. `example.spec.ts` is the Playwright starter example. Neither file is part of the focused CI command, but both remain available for local full-suite discovery.
+
+## Allure reports
+
+Run the suite, generate the report, and open it locally:
+
+```bash
 npx playwright test tests/products-cart --project=chromium
 npm run allure:generate
 npm run allure:open
 ```
 
-Allure Report 3 se ejecuta con Node.js: no añade un requisito de Java. Los resultados crudos se escriben en `allure-results/` y el informe generado en `allure-report/`; ambos directorios son generados e ignorados por Git. El reporte HTML de Playwright continúa en `playwright-report/`.
+Allure Report 3 runs on Node.js and adds no Java requirement. Raw results are written to `allure-results/`, and the generated report to `allure-report/`; both are generated and ignored by Git. The Playwright HTML report remains in `playwright-report/`.
 
-La configuración conserva screenshots y traces solo cuando una prueba falla. `allure-playwright` reconoce automáticamente los adjuntos que Playwright produce al finalizar la prueba, incluido el `trace.zip`, por lo que no se usa un `afterEach` que pudiera leerlo antes de cerrar el contexto ni código adicional que duplicase adjuntos. Para inspeccionar un trace, descárgalo desde el resultado de Allure y ábrelo con Playwright Trace Viewer:
+The configuration retains screenshots and traces only when a test fails. `allure-playwright` automatically receives Playwright attachments after a test completes, including `trace.zip`; no custom `afterEach` reads an incomplete file before the context closes, and no custom code duplicates attachments. Download a trace from an Allure result and open it with Playwright Trace Viewer:
 
 ```bash
 npx playwright show-trace trace.zip
 ```
 
-No se promete un visor de traces integrado en la interfaz de Allure: el ZIP descargado se abre con Trace Viewer.
+Allure is not represented as an embedded Trace Viewer: the downloaded ZIP opens in Trace Viewer.
 
-Resultado local más reciente durante la integración de Allure: **5 passed (8.1 s)** con `retry: 0`. El cierre de la viñeta se ejercitó en los casos de cantidad 1, cantidad 2 y eliminación. Es una ejecución satisfactoria, no una garantía de estabilidad de la suite ni de disponibilidad continua del sitio externo.
+The latest local result during Allure integration was **5 passed (8.1 s)** with `retry: 0`. Vignette dismissal was exercised in the quantity 1, quantity 2, and deletion scenarios. This is one successful execution, not a guarantee of suite stability or continuous availability of the external site.
 
-Se conserva como evidencia histórica el diagnóstico local anterior de **4 passed, 1 failed**: el caso de cantidad 2 encontró una viñeta de Google y un anuncio ancla, ambos con iframes visibles de título `Advertisement`; la prueba falló de forma explícita al comprobar la unicidad y no escogió un iframe arbitrariamente. También se conserva la ejecución previa de **5 passed (8.6 s)**.
+Historical evidence is retained separately: an earlier local diagnosis recorded **4 passed, 1 failed** because the quantity 2 scenario found both a Google vignette and an anchor ad with visible `Advertisement` iframes; the test failed explicitly on uniqueness rather than selecting an arbitrary iframe. An earlier successful run recorded **5 passed (8.6 s)**.
 
-El reporte de CI del commit [`d7d760b`](https://github.com/MilagrosRojas/automationexercise-ai-qa/actions/runs/38065877721) aporta evidencia adicional: los cinco casos de Chromium aprobaron con `retry: 0`; la ejecución de Playwright duró aproximadamente 29 s y el cierre de la viñeta se ejercitó correctamente en los casos de cantidad 1 y cantidad 2. Esta evidencia de una ejecución tampoco garantiza estabilidad futura.
+The CI report for commit [`d7d760b`](https://github.com/MilagrosRojas/pw-with-agents/actions/runs/38065877721) provides additional historical evidence: all five Chromium scenarios passed with `retry: 0`, Playwright ran for about 29 seconds, and vignette dismissal was exercised in quantity 1 and quantity 2. This additional execution is not sufficient to claim future stability.
 
-## Requisitos y notas de ejecución
+## Requirements and execution notes
 
-- Node.js compatible con el proyecto y `npm ci`.
-- Navegadores de Playwright instalados, por ejemplo: `npx playwright install --with-deps`.
-- Acceso de red a `https://automationexercise.com/`; los resultados también dependen de contenido de terceros servido por el sitio.
-- En este entorno macOS, Chromium no pudo iniciarse dentro del sandbox: `bootstrap_check_in ... MachPortRendezvousServer ... Permission denied (1100)`. La ejecución del navegador necesitó autorización fuera de ese sandbox.
-- El flujo de detalle puede recibir una viñeta de Google. Los specs detectan el estado `#google_vignette` y requieren exactamente un iframe visible con título `Advertisement` dentro de `ins[data-vignette-loaded="true"]` antes de buscar su botón accesible `Close ad`; no bloquean anuncios globalmente. El diagnóstico anterior también observó un anuncio ancla visible, excluido por ese contenedor específico. Las ejecuciones aprobadas no conservaron trace porque la configuración retiene traces solo ante fallos, por lo que no se afirma que el anuncio ancla coexistiera en esas ejecuciones.
+- Node.js 24.18.0 and `npm ci`.
+- Playwright browsers installed, for example with `npx playwright install --with-deps`.
+- Network access to `https://automationexercise.com/`; results also depend on third-party content served by that site.
+- In this macOS environment Chromium could not start inside the sandbox: `bootstrap_check_in ... MachPortRendezvousServer ... Permission denied (1100)`. Browser execution required permission outside that sandbox.
+- Detail navigation can receive a Google vignette. The specs detect `#google_vignette` and require exactly one visible `Advertisement` iframe inside `ins[data-vignette-loaded="true"]` before locating its accessible `Close ad` button; they do not block ads globally. The earlier diagnosis also observed a visible anchor ad, excluded by that specific container. Successful runs did not retain traces because configuration retains them only on failure, so they do not establish that the anchor ad coexisted in those executions.
 
-## Agentes de Playwright y portabilidad
+## Playwright agents and portability
 
-Los archivos `.codex/agents/playwright_test_*.toml` conservan rutas absolutas locales para Node 24.18.0 y para `node_modules/playwright/cli.js`. Al clonar el repositorio, instala las dependencias, activa la versión indicada en `.nvmrc` y actualiza ambos valores de cada TOML a las rutas locales de la nueva máquina.
+The `.codex/agents/playwright_test_*.toml` files intentionally retain local absolute paths to Node 24.18.0 and `node_modules/playwright/cli.js`. After cloning, install dependencies, activate the `.nvmrc` version, and adapt both values in each TOML to the local machine.
 
-Se evaluó la configuración portable generada por `npx playwright init-agents --loop codex`:
+The portable configuration generated by `npx playwright init-agents --loop codex` was evaluated:
 
 ```toml
 command = "npx"
 args = ["playwright", "run-test-mcp-server"]
 ```
 
-No se conservó en este entorno. Desde la raíz del proyecto, el `npx` disponible resolvió `/opt/homebrew/bin/node` (Node 20.8.0), que no inicia porque falta una biblioteca ICU. Con Node 24.18.0 activado desde `.nvmrc`, `npx --no-install playwright --version` sí resolvió Playwright 1.64.0. Como el lanzador de agentes no documenta que herede ese `PATH` ni que resuelva rutas relativas desde la raíz, no se sustituyeron las rutas absolutas actuales. Antes de adoptar la variante portable en otra máquina, valida desde la raíz `node --version`, `npx --no-install playwright --version` y el arranque del MCP con `planner_setup_page`.
+It was not retained in this environment. From the repository root, available `npx` resolved `/opt/homebrew/bin/node` (Node 20.8.0), which could not start because an ICU library was missing. With Node 24.18.0 activated from `.nvmrc`, `npx --no-install playwright --version` resolved Playwright 1.64.0. Because the agent launcher does not document inheriting that `PATH` or resolving relative paths from the repository root, the working absolute paths were retained. Before adopting the portable form on another machine, validate `node --version`, `npx --no-install playwright --version`, and MCP startup with `planner_setup_page` from the repository root.
 
 ## GitHub Actions
 
-El workflow [`.github/workflows/playwright.yml`](.github/workflows/playwright.yml) usa Node 24, ejecuta `npm ci`, instala Chromium con sus dependencias y ejecuta exclusivamente:
+The [workflow](.github/workflows/playwright.yml) uses Node 24, runs `npm ci`, installs Chromium and its dependencies, and runs only:
 
 ```bash
 npx playwright test tests/products-cart --project=chromium
 ```
 
-Se activa en `push` y `pull_request` hacia `main` o `master`, y también permite ejecución manual con `workflow_dispatch`. La ejecución conserva su estado fallido aunque la generación de Allure Report 3 se ejecuta con `always()`. El informe HTML (`playwright-report/`), los resultados de Playwright (`test-results/`), `allure-results/` y `allure-report/` se conservan como artifacts incluso cuando fallan las pruebas. Firefox y WebKit siguen configurados en `playwright.config.ts`, pero están pendientes de validación en CI para este alcance actual.
+It runs for pushes and pull requests targeting `main` or `master`, and manually through `workflow_dispatch`. The test failure state is retained even though Allure Report 3 generation uses `always()`. The HTML report (`playwright-report/`), Playwright results (`test-results/`), `allure-results/`, and `allure-report/` are uploaded as artifacts even when tests fail. Firefox and WebKit remain configured in `playwright.config.ts` but are pending CI validation for the current scope.
