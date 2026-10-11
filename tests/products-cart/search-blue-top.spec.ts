@@ -1,10 +1,38 @@
 import { test, expect } from '@playwright/test';
+import * as allure from 'allure-js-commons';
 
 // spec: specs/products-cart.md
 // seed: tests/seed.spec.ts
 
 test.describe('Blue Top cart flows', () => {
   test('searches for Blue Top and verifies observed matching results', async ({ page }) => {
+    await allure.description(`
+## Objective
+Verify that searching for **Blue Top** returns logical results consistent with the queried term and preserves the observed contract for the Blue Top card.
+
+## Preconditions and case independence
+- The case uses Playwright's isolated \`page\` fixture; it does not load or share \`storageState\`.
+- Before preparing data, it navigates to the cart and verifies the empty-cart message and zero product rows.
+- If that precondition is not met, the case fails: it does not delete products as automatic recovery.
+
+## Test data
+- Search term: \`Blue Top\`.
+- Expected product: \`Blue Top\`.
+- Expected price on the exact card: \`Rs. 500\`.
+- Expected View Product link: \`/product_details/1\`.
+
+## Steps
+1. Open the cart and verify that it is empty and has no rows.
+2. Open Products, verify the URL and the **All Products** heading.
+3. Enter \`Blue Top\` in **Search Product**, submit the search, and verify the encoded URL and the **Searched Products** heading.
+4. Inspect the logical \`.col-sm-4\` cards and read names from the normal \`.single-products > .productinfo > p\` representation, without counting the overlay variant.
+5. Locate the single exact Blue Top card and verify its price, **Add to cart**, and **View Product** link.
+
+## Expected results
+- There is at least one logical card in the results, and all its names contain \`Blue Top\`, case-insensitively.
+- There is exactly one exact Blue Top card with \`Rs. 500\` and **Add to cart** visible.
+- Its **View Product** link is unique and has an \`href\` attribute equal to \`/product_details/1\`.
+`);
     // 1. Create a fresh browser context for this case without loading or sharing storageState; navigate to Cart.
     await page.goto('/view_cart');
 

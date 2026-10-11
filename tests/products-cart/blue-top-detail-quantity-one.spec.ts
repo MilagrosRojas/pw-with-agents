@@ -1,10 +1,39 @@
 import { test, expect } from '@playwright/test';
+import * as allure from 'allure-js-commons';
 
 // spec: specs/products-cart.md
 // seed: tests/seed.spec.ts
 
 test.describe('Blue Top cart flows', () => {
   test('adds Blue Top with explicit quantity 1 and shows one exact cart row', async ({ page }) => {
+    await allure.description(`
+## Objective
+Verify that adding **Blue Top** from its detail page with an explicit quantity of \`1\` produces one exact cart row.
+
+## Preconditions and case independence
+- The case uses Playwright's isolated \`page\` fixture; it does not load or share \`storageState\`.
+- It first verifies the empty-cart message and zero rows; it does not delete products to restore that condition.
+- All data is prepared within this same case, without depending on another case.
+
+## Test data
+- Product: \`Blue Top\`.
+- Expected detail: \`/product_details/1\` and \`Rs. 500\`.
+- Requested quantity: \`1\`.
+- Expected total: \`Rs. 500\`.
+
+## Steps
+1. Open the cart and confirm that it is empty and has no rows.
+2. Open Products, verify **All Products**, locate the single Blue Top card, and validate that its single **View Product** link points to \`/product_details/1\`.
+3. Activate **View Product**. Only if the observed advertising vignette is visible, verify its accessible **Close ad** button, close it, and activate **View Product** again only if the URL is still not the detail URL.
+4. Verify the detail URL, the Blue Top heading, and \`Rs. 500\`; enter \`1\` in Quantity and confirm that value.
+5. Add the product, verify the **Added!** modal, its message, and **View Cart**, then open the cart from that modal.
+6. Verify the single prepared Blue Top row.
+
+## Expected results
+- The detail shows Blue Top and \`Rs. 500\`, and Quantity retains \`1\` before adding.
+- The modal confirms that the product was added and offers **View Cart**.
+- The cart contains exactly one row: Blue Top name, \`Rs. 500\` unit price, \`1\` quantity, and \`Rs. 500\` total.
+`);
     // 1. Create a fresh browser context for this case without loading or sharing storageState; navigate to Cart.
     await page.goto('/view_cart');
 

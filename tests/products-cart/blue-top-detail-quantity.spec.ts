@@ -1,10 +1,38 @@
 import { test, expect } from '@playwright/test';
+import * as allure from 'allure-js-commons';
 
 // spec: specs/products-cart.md
 // seed: tests/seed.spec.ts
 
 test.describe('Blue Top cart flows', () => {
   test('adds Blue Top with quantity 2 from product details', async ({ page }) => {
+    await allure.description(`
+## Objective
+Verify that selecting quantity \`2\` in the **Blue Top** detail page produces one cart row with the calculated total.
+
+## Preconditions and case independence
+- The case uses Playwright's isolated \`page\` fixture; it does not load or share \`storageState\`.
+- Before preparing data, it confirms the empty-cart message and zero rows; it does not delete products as automatic recovery.
+- Blue Top is prepared within this case and does not depend on the other cases.
+
+## Test data
+- Product: \`Blue Top\`.
+- Expected detail: \`/product_details/1\` and \`Rs. 500\`.
+- Observed initial quantity: \`1\`; entered quantity: \`2\`.
+- Expected total: \`Rs. 1000\`.
+
+## Steps
+1. Open the cart and verify that it is empty and has no rows.
+2. Open Products, validate the URL and **All Products**, locate the single Blue Top card, and verify that its single **View Product** has \`href=/product_details/1\`.
+3. Activate **View Product**. Only if the observed advertising vignette is displayed, validate and click its **Close ad** button, wait for the vignette to become hidden, and activate **View Product** again only if the URL is still not the detail URL.
+4. Verify the detail URL, Blue Top, \`Rs. 500\`, and the initial quantity \`1\`; enter \`2\` and verify that it remains \`2\`.
+5. Add to the cart and verify **Added!**, the confirmation message, **Continue Shopping**, and **View Cart**.
+6. Open the cart from **View Cart** and validate the Blue Top row.
+
+## Expected results
+- The detail retains quantity \`2\` before adding, and the confirmation modal contains the indicated controls.
+- The cart has exactly one Blue Top row with \`Rs. 500\` unit price, \`2\` quantity, and \`Rs. 1000\` total.
+`);
     // 1. Create a fresh browser context for this case without loading or sharing storageState; navigate to Cart.
     await page.goto('/view_cart');
 
